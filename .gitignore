@@ -1,0 +1,4 @@
+openvino/model/*
+.env
+.idea/
+__pycache__

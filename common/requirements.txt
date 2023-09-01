@@ -1,0 +1,10 @@
+fastapi==0.103.0
+numpy==1.21.6
+opencv_contrib_python==4.6.0.66
+opencv_python_headless==4.6.0.66
+paddleocr==2.7.0.2
+paddlepaddle==2.5.1
+python-dotenv==1.0.0
+uvicorn==0.23.2
+python-dotenv==1.0.0
+python-multipart==0.0.6
