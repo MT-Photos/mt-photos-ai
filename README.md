@@ -28,31 +28,51 @@ https://github.com/PaddlePaddle/PaddleOCR/issues/489
 
 ## 镜像说明
 
-dockers 镜像仓库地址：
+DockerHub镜像仓库地址：
 https://hub.docker.com/r/mtphotos/mt-photos-ai
 
 镜像Tags说明：
 
 - latest：基于openvino文件夹打包生成，推荐**Intel CPU**机型安装这个镜像
-- onnx:基于onnx文件夹打包生产，推家**AMD CPU**机型安装这个镜像
+- onnx:基于onnx文件夹打包生产，推荐**AMD CPU**机型安装这个镜像
 
-由于cuda版本镜像包含的驱动等相关文件较多未打包镜像，有需要可以执行打包。
+由于cuda版本镜像包含的驱动等相关文件较多，未打包镜像，有需要可以自行打包。
 
 
-### docker打包
+### 打包docker镜像
 
 ```bash
 cd cuda
 docker build  . -t mt-photos-ai:cuda-latest
 ```
-`openvino`为文件夹，可根据需要替换为`onnx`、`openvino`
+`cuda`为文件夹，可根据需要替换为`onnx`、`openvino`
 
-### docker运行
+### 运行docker容器
 
 ```bash
 docker run -i -p 8000:8000 -e API_AUTH_KEY=mt_photos_ai_extra_secret --name mt-photos-ai --restart="unless-stopped" mt-photos-ai:cuda-latest
 ```
 `cuda-latest`可以替换为`latest`、`cpu-latest`
+
+
+### 下载源码本地运行
+
+- 安装python3，推荐3.8以上版本；
+- 根据硬件环境选择cuda、onnx或openvino文件夹
+- 在选择文件夹下执行`pip install -r requirements.txt`
+- 复制`.env.example`生成`.env`文件，然后修改`.env`文件内的API_AUTH_KEY
+- python3 server.py
+
+> API_AUTH_KEY为MT Photos填写api_key需要输入的值
+
+看到以下日志，则说明服务已经启动成功
+```bash
+INFO:     Started server process [3024]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+```
+
 
 ## API
 
@@ -128,22 +148,3 @@ curl --location --request POST 'http://127.0.0.1:8000/restart' \
 **response:**
 
 请求中断,没有返回，因为服务重启了
-
-
-### 本地运行
-
- - 安装python3，推荐3.8以上版本；
- - 根据硬件环境选择cuda、onnx或openvino文件夹
- - pip install -r requirements.txt
- - 复制`.env.example`生成`.env`文件，然后修改`.env`文件内的API_AUTH_KEY
- - python3 server.py
-
-> API_AUTH_KEY为MT Photos填写api_key需要输入的值 
-
-看到以下日志，则说明服务已经启动成功
-```bash
-INFO:     Started server process [3024]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
-```
