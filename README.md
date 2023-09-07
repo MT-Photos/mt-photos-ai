@@ -4,7 +4,9 @@
 
 ## 关于内存、显存占用
 
-> 不断增长是因为分配的 shape 变大了，初始化创建 temporary tensor 等等会增长，等初始化之后跑起来，shape 不增大的话应该会稳定。
+> 轻量模型会涨到2G，通用模型涨到5G。Docker镜像使用的是轻量模型。
+> 
+> 内存不断增长是因为分配的 shape 变大了，初始化创建 temporary tensor 等等会增长，等初始化之后跑起来，shape 不增大的话应该会稳定。
 >
 > 正常是过了最大的 shape 之后会保持稳定。 如果 shape 变小显存池尺寸也不会变小，目前机制会贪心增大但不会降低。
 >
@@ -16,10 +18,41 @@ https://github.com/PaddlePaddle/PaddleOCR/issues/489
 
 ## 目录说明
 
-- common：基于paddleocr库自带的api来进行识别任务
-- openvino：基于OpenVINO，调用PaddleOCR模型来进行识别任务
+- openvino：基于rapidocr_openvino库，进行识别任务。**适用于Intel CPU运行**
+- onnx：基于rapidocr_onnxruntime库，进行识别任务。**适用于AMD CPU运行**
+- cuda：基于paddleocr官方库，进行识别任务。**适用于支持CUDA的显卡运行**
 
-在intel cpu上运行时OpenVINO版本会快很多,差不多有10倍的提升；
+> 在Intel cpu上运行时OpenVINO版本会快很多；
+
+>RapidOCR更多配置可参考官方仓库 https://github.com/RapidAI/RapidOCR
+
+## 镜像说明
+
+dockers 镜像仓库地址：
+https://hub.docker.com/r/mtphotos/mt-photos-ai
+
+镜像Tags说明：
+
+- latest：基于openvino文件夹打包生成，推荐**Intel CPU**机型安装这个镜像
+- onnx:基于onnx文件夹打包生产，推家**AMD CPU**机型安装这个镜像
+
+由于cuda版本镜像包含的驱动等相关文件较多未打包镜像，有需要可以执行打包。
+
+
+### docker打包
+
+```bash
+cd cuda
+docker build  . -t mt-photos-ai:cuda-latest
+```
+`openvino`为文件夹，可根据需要替换为`onnx`、`openvino`
+
+### docker运行
+
+```bash
+docker run -i -p 8000:8000 -e API_AUTH_KEY=mt_photos_ai_extra_secret --name mt-photos-ai --restart="unless-stopped" mt-photos-ai:cuda-latest
+```
+`cuda-latest`可以替换为`latest`、`cpu-latest`
 
 ## API
 
@@ -96,64 +129,21 @@ curl --location --request POST 'http://127.0.0.1:8000/restart' \
 
 请求中断,没有返回，因为服务重启了
 
-## docker打包 & 运行
-
-### OpenVINO版本
-
-```bash
-cd openvino
-docker build  . -t mt-photos-ai:latest
-```
-
-```bash
-docker run -i -p 8000:8000 -e API_AUTH_KEY=mt_photos_ai_extra_secret --name mt-photos-ai --restart="unless-stopped" mt-photos-ai:latest
-```
-
-mt_photos_ai_extra_secret 为验证api请求的api_key,请替换
-
-### common版本
-
-```bash
-cd common
-docker build  . -t mt-photos-ai:cpu-latest
-```
-
-```bash
-docker run -i -p 8000:8000 -e API_AUTH_KEY=mt_photos_ai_extra_secret --name mt-photos-ai --restart="unless-stopped" mt-photos-ai:cpu-latest
-```
-
-mt_photos_ai_extra_secret 为验证api请求的api_key,请替换
-
-## 本地运行或者打包openvino文件夹下需要额外下载的文件
-
-下载以下2个文件,然后解压放到model文件夹下
-
-- https://paddleocr.bj.bcebos.com/PP-OCRv4/chinese/ch_PP-OCRv4_det_infer.tar
-- https://paddleocr.bj.bcebos.com/PP-OCRv4/chinese/ch_PP-OCRv4_rec_infer.tar
-
-
-```bash
-# tree ./openvino 
-|-- model
-|   |-- ch_PP-OCRv4_det_infer
-|   |   |-- inference.pdiparams
-|   |   |-- inference.pdiparams.info
-|   |   `-- inference.pdmodel
-|   |-- ch_PP-OCRv4_rec_infer
-|   |   |-- inference.pdiparams
-|   |   |-- inference.pdiparams.info
-|   |   `-- inference.pdmodel
-|   `-- ppocr_keys_v1.txt
-|-- pre_post_processing.py
-|-- requirements.txt
-|-- server.py
-`-- vino.py
-```
 
 ### 本地运行
 
- - 安装python3，推荐版本3.8；
- - 打开 common 或  openvino文件夹
+ - 安装python3，推荐3.8以上版本；
+ - 根据硬件环境选择cuda、onnx或openvino文件夹
  - pip install -r requirements.txt
- - openvino文件夹下需要下model下的相关模型文件，common不用下载
+ - 复制`.env.example`生成`.env`文件，然后修改`.env`文件内的API_AUTH_KEY
  - python3 server.py
+
+> API_AUTH_KEY为MT Photos填写api_key需要输入的值 
+
+看到以下日志，则说明服务已经启动成功
+```bash
+INFO:     Started server process [3024]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+```

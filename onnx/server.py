@@ -6,7 +6,7 @@ import uvicorn
 import numpy as np
 import cv2
 import asyncio
-from rapidocr_openvino import RapidOCR
+from rapidocr_onnxruntime import RapidOCR
 
 on_linux = sys.platform.startswith('linux')
 
