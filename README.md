@@ -61,7 +61,7 @@ docker run -i -p 8000:8000 -e API_AUTH_KEY=mt_photos_ai_extra_secret --name mt-p
 - 根据硬件环境选择cuda、onnx或openvino文件夹
 - 在选择文件夹下执行`pip install -r requirements.txt`
 - 复制`.env.example`生成`.env`文件，然后修改`.env`文件内的API_AUTH_KEY
-- python3 server.py
+- 执行 `python server.py` ，启动服务
 
 > API_AUTH_KEY为MT Photos填写api_key需要输入的值
 
