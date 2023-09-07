@@ -16,6 +16,6 @@ RUN python3 -m pip install paddlepaddle-gpu==2.5.1.post112 -f https://www.paddle
 COPY server.py .
 
 ENV API_AUTH_KEY=mt_photos_ai_extra
-EXPOSE 8080
+EXPOSE 8000
 
 CMD [ "python3", "/app/server.py" ]

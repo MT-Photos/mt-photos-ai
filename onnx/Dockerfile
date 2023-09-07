@@ -15,6 +15,6 @@ RUN pip3 install --no-cache-dir -r requirements.txt --index-url=https://pypi.tun
 COPY server.py .
 
 ENV API_AUTH_KEY=mt_photos_ai_extra
-EXPOSE 8080
+EXPOSE 8000
 
 CMD [ "python3", "/app/server.py" ]
