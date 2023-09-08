@@ -57,12 +57,14 @@ docker run -i -p 8000:8000 -e API_AUTH_KEY=mt_photos_ai_extra_secret --name mt-p
 
 ### 下载源码本地运行
 
-- 安装python3，推荐3.8以上版本；
+- 安装python **3.8版本**，实测再更高版本上无法运行
 - 根据硬件环境选择cuda、onnx或openvino文件夹
 - 在选择文件夹下执行`pip install -r requirements.txt`
 - 复制`.env.example`生成`.env`文件，然后修改`.env`文件内的API_AUTH_KEY
 - 执行 `python server.py` ，启动服务
 
+> python安装包地址： https://www.python.org/downloads/release/python-3810/
+> 
 > API_AUTH_KEY为MT Photos填写api_key需要输入的值
 
 看到以下日志，则说明服务已经启动成功
