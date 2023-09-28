@@ -8,3 +8,4 @@ python-dotenv==1.0.0
 uvicorn==0.23.2
 python-dotenv==1.0.0
 python-multipart==0.0.6
+cn-clip>=1.5.1

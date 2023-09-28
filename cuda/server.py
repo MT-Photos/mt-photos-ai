@@ -7,28 +7,55 @@ import numpy as np
 import cv2
 import asyncio
 from paddleocr import PaddleOCR
+import torch
+from PIL import Image
+from io import BytesIO
+from pydantic import BaseModel
+import cn_clip.clip as clip
+
 
 on_linux = sys.platform.startswith('linux')
 
 load_dotenv()
 app = FastAPI()
 api_auth_key = os.getenv("API_AUTH_KEY")
+clip_model_name = os.getenv("CLIP_MODEL")
+
 
 inactive_task = None
+ocr_model = None
+clip_processor = None
+clip_model = None
 
-ocr_model = PaddleOCR(
-    show_log=False,
-    use_angle_cls=True,
-    lang="ch",
-    ocr_version="PP-OCRv4",
-    use_gpu=True
-)
-# https://github.com/PaddlePaddle/PaddleOCR/blob/release/2.7/doc/doc_ch/whl.md
+device = "cuda" if torch.cuda.is_available() else "cpu"
+
+class ClipTxtRequest(BaseModel):
+    text: str
+
+def load_ocr_model():
+    global ocr_model
+    if ocr_model is None:
+        ocr_model = PaddleOCR(
+            show_log=False,
+            use_angle_cls=True,
+            lang="ch",
+            ocr_version="PP-OCRv4",
+            use_gpu=True
+        )
+        # https://github.com/PaddlePaddle/PaddleOCR/blob/release/2.7/doc/doc_ch/whl.md
+
+def load_clip_model():
+    global clip_processor
+    global clip_model
+    if clip_processor is None:
+        model, preprocess = clip.load_from_name(clip_model_name, device=device)
+        model.eval()
+        clip_model = model
+        clip_processor = preprocess
 
 async def check_inactive():
     await asyncio.sleep(300)
     restart_program()
-
 
 @app.middleware("http")
 async def check_activity(request, call_next):
@@ -97,6 +124,7 @@ async def check_req(api_key: str = Depends(verify_header)):
 
 @app.post("/ocr")
 async def process_image(file: UploadFile = File(...), api_key: str = Depends(verify_header)):
+    load_ocr_model()
     image_bytes = await file.read()
     nparr = np.frombuffer(image_bytes, np.uint8)
     img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
@@ -106,6 +134,20 @@ async def process_image(file: UploadFile = File(...), api_key: str = Depends(ver
     del _result
     return {'result': result}
 
+@app.post("/clip/img")
+async def clip_process_image(file: UploadFile = File(...), api_key: str = Depends(verify_header)):
+    load_clip_model()
+    image_bytes = await file.read()
+    image = clip_processor(Image.open(BytesIO(image_bytes))).unsqueeze(0).to(device)
+    image_features = clip_model.encode_image(image)
+    return {'result': ["{:.16f}".format(vec) for vec in image_features[0]]}
+
+@app.post("/clip/txt")
+async def clip_process_txt(request:ClipTxtRequest, api_key: str = Depends(verify_header)):
+    load_clip_model()
+    text = clip.tokenize([request.text]).to(device)
+    text_features = clip_model.encode_text(text)
+    return {'result': ["{:.16f}".format(vec) for vec in text_features[0]]}
 
 async def predict(predict_func, inputs):
     return await asyncio.get_running_loop().run_in_executor(None, predict_func, inputs)

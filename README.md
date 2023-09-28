@@ -1,20 +1,7 @@
 # MT Photos AI识别相关任务独立部署项目
 
 - 基于PaddleOCR实现的文本识别(OCR)接口
-
-## 关于内存、显存占用
-
-> 轻量模型会涨到2G，通用模型涨到5G。Docker镜像使用的是轻量模型。
-> 
-> 内存不断增长是因为分配的 shape 变大了，初始化创建 temporary tensor 等等会增长，等初始化之后跑起来，shape 不增大的话应该会稳定。
->
-> 正常是过了最大的 shape 之后会保持稳定。 如果 shape 变小显存池尺寸也不会变小，目前机制会贪心增大但不会降低。
->
-> 如果你想控制最大显存变小一点，可以减小输入图像的尺度：将params.py中的参数det_max_side_len从默认的960改成680或者更小尺度。
-
-原文地址：
-
-https://github.com/PaddlePaddle/PaddleOCR/issues/489
+- 基于Chinese-CLIP（OpenAI CLIP模型的中文版本）实现的图片、文本提取特征接口
 
 ## 目录说明
 
@@ -25,6 +12,12 @@ https://github.com/PaddlePaddle/PaddleOCR/issues/489
 > 在Intel cpu上运行时OpenVINO版本会快很多；
 
 >RapidOCR更多配置可参考官方仓库 https://github.com/RapidAI/RapidOCR
+
+> ./onnx/utils 和 ./openvino/utils 目录下需要手动添加 vit-b-16.img.fp32.onnx、vit-b-16.txt.fp32.onnx 2个模型文件
+> 
+> 转换ONNX模型方法见：
+> 
+> https://github.com/OFA-Sys/Chinese-CLIP/blob/master/deployment.md#%E8%BD%AC%E6%8D%A2%E5%92%8C%E8%BF%90%E8%A1%8Connx%E6%A8%A1%E5%9E%8B
 
 ## 镜像说明
 
