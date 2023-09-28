@@ -13,12 +13,6 @@
 
 >RapidOCR更多配置可参考官方仓库 https://github.com/RapidAI/RapidOCR
 
-> ./onnx/utils 和 ./openvino/utils 目录下需要手动添加 vit-b-16.img.fp32.onnx、vit-b-16.txt.fp32.onnx 2个模型文件
-> 
-> 转换ONNX模型方法见：
-> 
-> https://github.com/OFA-Sys/Chinese-CLIP/blob/master/deployment.md#%E8%BD%AC%E6%8D%A2%E5%92%8C%E8%BF%90%E8%A1%8Connx%E6%A8%A1%E5%9E%8B
-
 ## 镜像说明
 
 DockerHub镜像仓库地址：
@@ -59,6 +53,15 @@ docker run -i -p 8000:8000 -e API_AUTH_KEY=mt_photos_ai_extra_secret --name mt-p
 > python安装包地址： https://www.python.org/downloads/release/python-3810/
 > 
 > API_AUTH_KEY为MT Photos填写api_key需要输入的值
+
+> ./onnx/utils 和 ./openvino/utils 目录下需要手动添加 vit-b-16.img.fp32.onnx、vit-b-16.txt.fp32.onnx 2个模型文件
+>
+> 可以从release中下载附件：https://github.com/MT-Photos/mt-photos-ai/releases/tag/v1.1.0
+>
+> 手动转换ONNX模型方法见：
+>
+> https://github.com/OFA-Sys/Chinese-CLIP/blob/master/deployment.md#%E8%BD%AC%E6%8D%A2%E5%92%8C%E8%BF%90%E8%A1%8Connx%E6%A8%A1%E5%9E%8B
+
 
 看到以下日志，则说明服务已经启动成功
 ```bash
