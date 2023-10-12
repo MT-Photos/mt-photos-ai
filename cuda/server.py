@@ -8,11 +8,11 @@ import cv2
 import asyncio
 from paddleocr import PaddleOCR
 import torch
-from PIL import Image
+from PIL import Image, ImageFile
 from io import BytesIO
 from pydantic import BaseModel
 import cn_clip.clip as clip
-
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 on_linux = sys.platform.startswith('linux')
 
@@ -109,38 +109,42 @@ async def check_req(api_key: str = Depends(verify_header)):
 
 @app.post("/restart")
 async def check_req(api_key: str = Depends(verify_header)):
-    # 轻量模型内存会涨到2G，通用模型涨到5G。
-    # 不断增长的内存占用是因为分配的 shape 变大了，初始化创建 tempory tensor 等等会增长，
-    # 等初始化之后跑起来，shape 不增大的话应该会稳定。
-    # 正常是过了最大的 shape 之后会保持稳定。
-    # 如果 shape 变小显存池尺寸也不会变小，目前机制会贪心增大但不会降低。
-
-    if on_linux:
-        # 容器内，无法有效释放内存，重启进程
-        restart_program()
-    else:
-        return {'result': 'unsupported'}
+    # cuda版本 OCR没有显存未释放问题，这边不需要重启
+    return {'result': 'unsupported'}
+    # if on_linux:
+    #     # 容器内，无法有效释放内存，重启进程
+    #     restart_program()
+    # else:
+    #     return {'result': 'unsupported'}
 
 
 @app.post("/ocr")
 async def process_image(file: UploadFile = File(...), api_key: str = Depends(verify_header)):
     load_ocr_model()
     image_bytes = await file.read()
-    nparr = np.frombuffer(image_bytes, np.uint8)
-    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-    _result = await predict(ocr_model.ocr, img)
-    result = trans_result(_result[0])
-    del img
-    del _result
-    return {'result': result}
+    try:
+        nparr = np.frombuffer(image_bytes, np.uint8)
+        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        _result = await predict(ocr_model.ocr, img)
+        result = trans_result(_result[0])
+        del img
+        del _result
+        return {'result': result}
+    except Exception as e:
+        print(e)
+        return {'result': [], 'msg': str(e)}
 
 @app.post("/clip/img")
 async def clip_process_image(file: UploadFile = File(...), api_key: str = Depends(verify_header)):
     load_clip_model()
     image_bytes = await file.read()
-    image = clip_processor(Image.open(BytesIO(image_bytes))).unsqueeze(0).to(device)
-    image_features = clip_model.encode_image(image)
-    return {'result': ["{:.16f}".format(vec) for vec in image_features[0]]}
+    try:
+        image = clip_processor(Image.open(BytesIO(image_bytes))).unsqueeze(0).to(device)
+        image_features = clip_model.encode_image(image)
+        return {'result': ["{:.16f}".format(vec) for vec in image_features[0]]}
+    except Exception as e:
+        print(e)
+        return {'result': [], 'msg': str(e)}
 
 @app.post("/clip/txt")
 async def clip_process_txt(request:ClipTxtRequest, api_key: str = Depends(verify_header)):

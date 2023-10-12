@@ -66,6 +66,7 @@ async def verify_header(api_key: str = Header(...)):
 def to_fixed(num):
     return str(round(num, 2))
 
+
 def trans_result(result):
     texts = []
     scores = []
@@ -115,22 +116,31 @@ async def check_req(api_key: str = Depends(verify_header)):
 async def process_image(file: UploadFile = File(...), api_key: str = Depends(verify_header)):
     load_ocr_model()
     image_bytes = await file.read()
-    nparr = np.frombuffer(image_bytes, np.uint8)
-    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-    _result = rapid_ocr(img)
-    result = trans_result(_result[0])
-    del img
-    del _result
-    return {'result': result}
+    try:
+        nparr = np.frombuffer(image_bytes, np.uint8)
+        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        _result = rapid_ocr(img)
+        result = trans_result(_result[0])
+        del img
+        del _result
+        return {'result': result}
+    except Exception as e:
+        print(e)
+        return {'result': [], 'msg': str(e)}
+
 
 @app.post("/clip/img")
 async def clip_process_image(file: UploadFile = File(...), api_key: str = Depends(verify_header)):
     load_clip_img_model()
     image_bytes = await file.read()
-    nparr = np.frombuffer(image_bytes, np.uint8)
-    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-    result = await predict(clip.process_image, img, clip_img_model)
-    return {'result': ["{:.16f}".format(vec) for vec in result]}
+    try:
+        nparr = np.frombuffer(image_bytes, np.uint8)
+        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        result = await predict(clip.process_image, img, clip_img_model)
+        return {'result': ["{:.16f}".format(vec) for vec in result]}
+    except Exception as e:
+        print(e)
+        return {'result': [], 'msg': str(e)}
 
 @app.post("/clip/txt")
 async def clip_process_txt(request:ClipTxtRequest, api_key: str = Depends(verify_header)):

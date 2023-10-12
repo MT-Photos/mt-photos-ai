@@ -1,10 +1,10 @@
 import os
 import sys
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageFile
 from typing import Union, List
 from openvino.runtime import Core
-
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 current_folder = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(current_folder)

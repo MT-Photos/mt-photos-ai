@@ -12,8 +12,13 @@ COPY requirements.txt .
 
 # 安装依赖包
 RUN pip3 install --no-cache-dir -r requirements.txt --index-url=https://pypi.tuna.tsinghua.edu.cn/simple/
+
+COPY ./utils/vit-b-16.img.fp32.onnx ./utils/vit-b-16.img.fp32.onnx
+COPY ./utils/vit-b-16.txt.fp32.onnx ./utils/vit-b-16.txt.fp32.onnx
+COPY ./utils/bert_tokenizer.py ./utils/bert_tokenizer.py
+COPY ./utils/vocab.txt ./utils/vocab.txt
+COPY ./utils/clip.py ./utils/clip.py
 COPY server.py .
-COPY ./utils ./utils
 
 ENV API_AUTH_KEY=mt_photos_ai_extra
 EXPOSE 8000
