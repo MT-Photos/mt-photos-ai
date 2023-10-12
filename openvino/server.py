@@ -99,18 +99,9 @@ async def check_req(api_key: str = Depends(verify_header)):
 
 @app.post("/restart")
 async def check_req(api_key: str = Depends(verify_header)):
-    # 轻量模型内存会涨到2G，通用模型涨到5G。
-    # 不断增长的内存占用是因为分配的 shape 变大了，初始化创建 tempory tensor 等等会增长，
-    # 等初始化之后跑起来，shape 不增大的话应该会稳定。
-    # 正常是过了最大的 shape 之后会保持稳定。
-    # 如果 shape 变小显存池尺寸也不会变小，目前机制会贪心增大但不会降低。
-
-    if on_linux:
-        # 容器内，无法有效释放内存，重启进程
-        restart_program()
-    else:
-        return {'result': 'unsupported'}
-
+    # 已知的问题：使用openVINO进行OCR识别，存在内存泄露，进程的内存占用会一直增加；
+    # 客户端可调用，触发重启进程来释放内存
+    restart_program()
 
 @app.post("/ocr")
 async def process_image(file: UploadFile = File(...), api_key: str = Depends(verify_header)):
@@ -119,6 +110,9 @@ async def process_image(file: UploadFile = File(...), api_key: str = Depends(ver
     try:
         nparr = np.frombuffer(image_bytes, np.uint8)
         img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        height, width, _ = img.shape
+        if width > 10000 or height > 10000:
+            return {'result': [], 'msg': 'height or width out of range'}
         _result = rapid_ocr(img)
         result = trans_result(_result[0])
         del img
@@ -153,12 +147,8 @@ async def predict(predict_func, inputs,model):
     return await asyncio.get_running_loop().run_in_executor(None, predict_func, inputs,model)
 
 def restart_program():
-    # 仅支持linux，Windows需要使用subprocess模块来执行一个新的Python进程
-    print('restart')
-    if on_linux:
-        # 容器内，无法有效释放内存，重启进程
-        python = sys.executable
-        os.execl(python, python, *sys.argv)
+    python = sys.executable
+    os.execl(python, python, *sys.argv)
 
 
 if __name__ == "__main__":

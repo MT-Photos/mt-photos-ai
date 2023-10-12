@@ -109,13 +109,9 @@ async def check_req(api_key: str = Depends(verify_header)):
 
 @app.post("/restart")
 async def check_req(api_key: str = Depends(verify_header)):
-    # cuda版本 OCR没有显存未释放问题，这边不需要重启
-    return {'result': 'unsupported'}
-    # if on_linux:
-    #     # 容器内，无法有效释放内存，重启进程
-    #     restart_program()
-    # else:
-    #     return {'result': 'unsupported'}
+    # cuda版本 OCR没有显存未释放问题，这边可以关闭重启
+    # return {'result': 'unsupported'}
+    restart_program()
 
 
 @app.post("/ocr")
@@ -125,6 +121,9 @@ async def process_image(file: UploadFile = File(...), api_key: str = Depends(ver
     try:
         nparr = np.frombuffer(image_bytes, np.uint8)
         img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        height, width, _ = img.shape
+        if width > 10000 or height > 10000:
+            return {'result': [], 'msg': 'height or width out of range'}
         _result = await predict(ocr_model.ocr, img)
         result = trans_result(_result[0])
         del img
@@ -158,12 +157,8 @@ async def predict(predict_func, inputs):
 
 
 def restart_program():
-    # 仅支持linux，Windows需要使用subprocess模块来执行一个新的Python进程
-    print('restart')
-    if on_linux:
-        # 容器内，无法有效释放内存，重启进程
-        python = sys.executable
-        os.execl(python, python, *sys.argv)
+    python = sys.executable
+    os.execl(python, python, *sys.argv)
 
 
 if __name__ == "__main__":
