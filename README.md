@@ -50,6 +50,10 @@ docker run -i -p 8000:8000 -e API_AUTH_KEY=mt_photos_ai_extra_secret --name mt-p
 - 复制`.env.example`生成`.env`文件，然后修改`.env`文件内的API_AUTH_KEY
 - 执行 `python server.py` ，启动服务
 
+> paddlepaddle-gpu 安装请根据CUDA版本 
+> 
+> https://www.paddlepaddle.org.cn/install/quick?docurl=/documentation/docs/zh/install/pip/windows-pip.html
+
 > python安装包地址： https://www.python.org/downloads/release/python-3810/
 > 
 > API_AUTH_KEY为MT Photos填写api_key需要输入的值
