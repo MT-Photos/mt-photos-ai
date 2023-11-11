@@ -110,8 +110,8 @@ async def check_req(api_key: str = Depends(verify_header)):
 @app.post("/restart")
 async def check_req(api_key: str = Depends(verify_header)):
     # cuda版本 OCR没有显存未释放问题，这边可以关闭重启
-    # return {'result': 'unsupported'}
-    restart_program()
+    return {'result': 'unsupported'}
+    # restart_program()
 
 
 @app.post("/ocr")
