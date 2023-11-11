@@ -1,9 +1,11 @@
-FROM python:3.9-bullseye
+FROM nvidia/cuda:11.7.1-cudnn8-devel-ubuntu22.04
 USER root
 # 镜像加速
 COPY ./sources.list /etc/apt/sources.list
 RUN apt update && \
-    apt install -y libgl1-mesa-glx libglib2.0-0 libsm6 libxrender1 libfontconfig1 nvidia-cuda-dev nvidia-cuda-toolkit && \
+    apt install -y wget libgl1-mesa-glx libglib2.0-0 libsm6 libxrender1 libfontconfig  python3 pip && \
+    wget http://nz2.archive.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.1f-1ubuntu2.20_amd64.deb && \
+    dpkg -i libssl1.1_1.1.1f-1ubuntu2.20_amd64.deb && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/log/*
 
 WORKDIR /app
@@ -16,6 +18,7 @@ RUN python3 -m pip install paddlepaddle-gpu==2.5.1.post112 -f https://www.paddle
 COPY server.py .
 
 ENV API_AUTH_KEY=mt_photos_ai_extra
-EXPOSE 8080
+ENV CLIP_MODEL=ViT-B-16
+EXPOSE 8000
 
 CMD [ "python3", "/app/server.py" ]
