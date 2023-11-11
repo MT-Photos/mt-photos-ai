@@ -37,7 +37,7 @@ docker build  . -t mt-photos-ai:cuda-latest
 ### 运行docker容器
 
 ```bash
-docker run -i -p 8000:8000 -e API_AUTH_KEY=mt_photos_ai_extra_secret --name mt-photos-ai --restart="unless-stopped" mt-photos-ai:cuda-latest
+docker run -i -p 8000:8000 -e API_AUTH_KEY=mt_photos_ai_extra_secret --name mt-photos-ai --gpus all --restart="unless-stopped" mt-photos-ai:cuda-latest
 ```
 `cuda-latest`可以替换为`latest`、`cpu-latest`
 
