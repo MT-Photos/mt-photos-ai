@@ -16,8 +16,6 @@ def join_path(folder_path, file_name):
 
 
 model_folder_path = current_folder
-img_coreml_model_path = join_path(model_folder_path, "clip_cn_vit-b-16.image.mlpackage/Data/com.apple.CoreML/model.mlmodel")
-txt_coreml_model_path = join_path(model_folder_path, "clip_cn_vit-b-16.text.mlpackage/Data/com.apple.CoreML/model.mlmodel")
 
 _tokenizer = bert.FullTokenizer()
 mean = np.array([0.48145466, 0.4578275, 0.40821073], dtype=np.float32)
@@ -72,7 +70,8 @@ def tokenize_numpy(texts: Union[str, List[str]], context_length: int = 52) -> np
     return result
 
 
-def load_img_model():
+def load_img_model(model_prefix):
+    img_coreml_model_path = join_path(model_folder_path, f"{model_prefix}.image.mlpackage/Data/com.apple.CoreML/model.mlmodel")
     model = coremltools.models.MLModel(img_coreml_model_path)
     input_description = model.get_spec().description.input
     # Extract the shape for the input named "image"
@@ -89,11 +88,12 @@ def process_image(img, img_model):
     inputs = image_processor([img], image_size=image_width)
     input = inputs[0:1, :, :, :]
     input_data = {'image': input}
-    image_feature = img_model.predict(input_data)["var_1350"][0].tolist()
+    image_feature = img_model.predict(input_data)["image_features"][0].tolist()
     return image_feature
 
 
-def load_txt_model():
+def load_txt_model(model_prefix):
+    txt_coreml_model_path = join_path(model_folder_path, f"{model_prefix}.text.mlpackage/Data/com.apple.CoreML/model.mlmodel")
     model = coremltools.models.MLModel(txt_coreml_model_path)
     return model
 
@@ -101,5 +101,5 @@ def load_txt_model():
 def process_txt(txt, text_model):
     input = tokenize_numpy([txt], 52).astype(np.int32)
     input_data = {'text': input}
-    embeddings = text_model.predict(input_data)["var_1113"][0].tolist()
+    embeddings = text_model.predict(input_data)["text_features"][0].tolist()
     return embeddings

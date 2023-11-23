@@ -15,29 +15,35 @@ on_linux = sys.platform.startswith('linux')
 load_dotenv()
 app = FastAPI()
 api_auth_key = os.getenv("API_AUTH_KEY")
+model_prefix = os.getenv("MODEL_PREFIX")
 
 inactive_task = None
 rapid_ocr = None
 clip_img_model = None
 clip_txt_model = None
 
+
 class ClipTxtRequest(BaseModel):
     text: str
+
 
 def load_ocr_model():
     global rapid_ocr
     if rapid_ocr is None:
         rapid_ocr = RapidOCR()
 
-def load_clip_img_model():
+
+def load_clip_img_model(model_prefix):
     global clip_img_model
     if clip_img_model is None:
-        clip_img_model = clip.load_img_model()
+        clip_img_model = clip.load_img_model(model_prefix)
 
-def load_clip_txt_model():
+
+def load_clip_txt_model(model_prefix):
     global clip_txt_model
     if clip_txt_model is None:
-        clip_txt_model = clip.load_txt_model()
+        clip_txt_model = clip.load_txt_model(model_prefix)
+
 
 async def check_inactive():
     await asyncio.sleep(300)
@@ -121,9 +127,10 @@ async def process_image(file: UploadFile = File(...), api_key: str = Depends(ver
         print(e)
         return {'result': [], 'msg': str(e)}
 
+
 @app.post("/clip/img")
 async def clip_process_image(file: UploadFile = File(...), api_key: str = Depends(verify_header)):
-    load_clip_img_model()
+    load_clip_img_model(model_prefix)
     image_bytes = await file.read()
     try:
         nparr = np.frombuffer(image_bytes, np.uint8)
@@ -134,15 +141,18 @@ async def clip_process_image(file: UploadFile = File(...), api_key: str = Depend
         print(e)
         return {'result': [], 'msg': str(e)}
 
+
 @app.post("/clip/txt")
-async def clip_process_txt(request:ClipTxtRequest, api_key: str = Depends(verify_header)):
-    load_clip_txt_model()
+async def clip_process_txt(request: ClipTxtRequest, api_key: str = Depends(verify_header)):
+    load_clip_txt_model(model_prefix)
     text = request.text
     result = await predict(clip.process_txt, text, clip_txt_model)
     return {'result': ["{:.16f}".format(vec) for vec in result]}
 
-async def predict(predict_func, inputs,model):
-    return await asyncio.get_running_loop().run_in_executor(None, predict_func, inputs,model)
+
+async def predict(predict_func, inputs, model):
+    return await asyncio.get_running_loop().run_in_executor(None, predict_func, inputs, model)
+
 
 def restart_program():
     python = sys.executable
