@@ -8,7 +8,8 @@
 - openvino：基于rapidocr_openvino库，进行识别任务。**适用于Intel CPU运行**
 - onnx：基于rapidocr_onnxruntime库，进行识别任务。**适用于AMD CPU运行**
 - cuda：基于paddleocr官方库，进行识别任务。**适用于支持CUDA的显卡运行**
-
+- coreml：CLIP任务使用CoreML加速。**适用于M系列处理器MAC电脑运行**
+  
 > 在Intel cpu上运行时OpenVINO版本会快很多；
 
 >RapidOCR更多配置可参考官方仓库 https://github.com/RapidAI/RapidOCR
