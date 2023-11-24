@@ -1,0 +1,10 @@
+fastapi
+numpy
+opencv_contrib_python
+opencv_python_headless
+python-dotenv
+uvicorn
+python-dotenv
+python-multipart
+rapidocr-onnxruntime
+coremltools
