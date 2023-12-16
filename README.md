@@ -5,8 +5,8 @@
 
 ## 目录说明
 
-- openvino：基于rapidocr_openvino库，进行识别任务。**适用于Intel CPU运行**
-- onnx：基于rapidocr_onnxruntime库，进行识别任务。**适用于AMD CPU运行**
+- openvino：基于rapidocr_openvino库，进行识别任务。**适用于Intel Xeon、Core CPU运行**
+- onnx：基于rapidocr_onnxruntime库，进行识别任务。**适用于所有CPU运行**
 - cuda：基于paddleocr官方库，进行识别任务。**适用于支持CUDA的显卡运行**
 - coreml：CLIP任务使用CoreML加速。**适用于M系列处理器MAC电脑运行**
   
