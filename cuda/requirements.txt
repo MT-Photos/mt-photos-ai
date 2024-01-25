@@ -1,11 +1,10 @@
-fastapi==0.103.0
-numpy==1.21.6
+fastapi==0.109.0
+numpy==1.26.3
 opencv_contrib_python==4.6.0.66
 opencv_python_headless==4.6.0.66
-paddleocr==2.7.0.2
+paddleocr==2.7.0.3
 #paddlepaddle-gpu==2.5.1.post112 -f https://www.paddlepaddle.org.cn/whl/linux/cudnnin/stable.html
-python-dotenv==1.0.0
-uvicorn==0.23.2
-python-dotenv==1.0.0
+uvicorn==0.27.0
+python-dotenv==1.0.1
 python-multipart==0.0.6
 cn-clip>=1.5.1
