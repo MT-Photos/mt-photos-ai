@@ -4,8 +4,8 @@ USER root
 COPY ./sources.list /etc/apt/sources.list
 RUN apt update && \
     apt install -y wget libgl1-mesa-glx libglib2.0-0 libsm6 libxrender1 libfontconfig  python3 pip && \
-    wget http://nz2.archive.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.1f-1ubuntu2.20_amd64.deb && \
-    dpkg -i libssl1.1_1.1.1f-1ubuntu2.20_amd64.deb && \
+    wget http://nz2.archive.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.1f-1ubuntu2.21_amd64.deb && \
+    dpkg -i libssl1.1_1.1.1f-1ubuntu2.21_amd64.deb && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/log/*
 
 WORKDIR /app
