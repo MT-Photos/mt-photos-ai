@@ -83,6 +83,8 @@ def trans_result(result):
     texts = []
     scores = []
     boxes = []
+    if result is None:
+        return {'texts': texts, 'scores': scores, 'boxes': boxes}
     for res_i in result:
         dt_box = res_i[0]
         box = {
