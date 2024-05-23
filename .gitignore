@@ -4,3 +4,10 @@ openvino/utils/*.onnx
 .env
 .idea/
 __pycache__
+
+xcuserdata/
+
+*.ipa
+*.dSYM.zip
+*.dSYM
+.DS_Store
