@@ -10,6 +10,7 @@
 		462CCCDC2BFEFC1700353F13 /* Starscream in Frameworks */ = {isa = PBXBuildFile; productRef = 462CCCDB2BFEFC1700353F13 /* Starscream */; };
 		462CCCDE2BFF040800353F13 /* websocket.swift in Sources */ = {isa = PBXBuildFile; fileRef = 462CCCDD2BFF040800353F13 /* websocket.swift */; };
 		462CCCE12BFF0AEF00353F13 /* wsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 462CCCE02BFF0AEF00353F13 /* wsView.swift */; };
+		462CCCE52C00708800353F13 /* ocr.swift in Sources */ = {isa = PBXBuildFile; fileRef = 462CCCE42C00708800353F13 /* ocr.swift */; };
 		4664CBFE2BFD872C00BBD544 /* chinese_clipApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4664CBFD2BFD872C00BBD544 /* chinese_clipApp.swift */; };
 		4664CC002BFD872C00BBD544 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4664CBFF2BFD872C00BBD544 /* ContentView.swift */; };
 		4664CC022BFD872D00BBD544 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4664CC012BFD872D00BBD544 /* Assets.xcassets */; };
@@ -44,6 +45,8 @@
 /* Begin PBXFileReference section */
 		462CCCDD2BFF040800353F13 /* websocket.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = websocket.swift; sourceTree = "<group>"; };
 		462CCCE02BFF0AEF00353F13 /* wsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = wsView.swift; sourceTree = "<group>"; };
+		462CCCE22C001E3200353F13 /* chinese-clip-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "chinese-clip-Info.plist"; sourceTree = SOURCE_ROOT; };
+		462CCCE42C00708800353F13 /* ocr.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ocr.swift; sourceTree = "<group>"; };
 		4664CBFA2BFD872C00BBD544 /* chinese_clip.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = chinese_clip.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		4664CBFD2BFD872C00BBD544 /* chinese_clipApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = chinese_clipApp.swift; sourceTree = "<group>"; };
 		4664CBFF2BFD872C00BBD544 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -97,6 +100,14 @@
 			path = Views;
 			sourceTree = "<group>";
 		};
+		462CCCE32C00707F00353F13 /* OCR */ = {
+			isa = PBXGroup;
+			children = (
+				462CCCE42C00708800353F13 /* ocr.swift */,
+			);
+			path = OCR;
+			sourceTree = "<group>";
+		};
 		4664CBF12BFD872C00BBD544 = {
 			isa = PBXGroup;
 			children = (
@@ -120,6 +131,8 @@
 		4664CBFC2BFD872C00BBD544 /* chinese_clip */ = {
 			isa = PBXGroup;
 			children = (
+				462CCCE32C00707F00353F13 /* OCR */,
+				462CCCE22C001E3200353F13 /* chinese-clip-Info.plist */,
 				462CCCDF2BFF0A3700353F13 /* Views */,
 				46DEF44E2BFEDC5A00C19C1F /* Utils */,
 				46A89CE52BFD8D5A00D7ED04 /* CoreMLModels */,
@@ -328,6 +341,7 @@
 				462CCCE12BFF0AEF00353F13 /* wsView.swift in Sources */,
 				46DEF4502BFEDC7E00C19C1F /* UIImage-Utils.swift in Sources */,
 				46A89CDC2BFD8AD900D7ED04 /* BertTokenizer.swift in Sources */,
+				462CCCE52C00708800353F13 /* ocr.swift in Sources */,
 				46A89CD72BFD8A6700D7ED04 /* ImgEncoder.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -492,6 +506,7 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "chinese-clip-Info.plist";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -502,7 +517,7 @@
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 14.5;
@@ -531,6 +546,7 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "chinese-clip-Info.plist";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -541,7 +557,7 @@
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 14.5;

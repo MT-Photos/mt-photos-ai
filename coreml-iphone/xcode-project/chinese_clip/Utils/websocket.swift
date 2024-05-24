@@ -4,18 +4,19 @@
 //
 //  Created by Yixuan Si on 5/23/24.
 //
-
+//
 import Foundation
 import Starscream
 import UIKit
 import CoreML
-
-// Define custom errors for the WebSocket handling and image processing
+//
+//// Define custom errors for the WebSocket handling and image processing
 enum WebSocketError: Error {
     case connectionError(String)
     case imageDataError
     case encodingError(String)
 }
+//
 
 class WebSocketImageClient: WebSocketDelegate {
     private var socket: WebSocket?
@@ -27,10 +28,12 @@ class WebSocketImageClient: WebSocketDelegate {
     private var imgEncoder: ImgEncoder
     var onConnectionStatusChanged: ((Bool) -> Void)?
     
-    var onProcessingCompleted: (() -> Void)?  // 添加这个闭包来通知处理完成
+    var onProcessingCompleted: (() -> Void)?
     
     var clientKey: String?
-
+    private var messageQueue = [String: Data]()
+    private var processedMessageIds = Set<String>()
+    
     init(serverURL: URL, encoder: ImgEncoder) {
         var request = URLRequest(url: serverURL)
         request.timeoutInterval = 5
@@ -41,10 +44,7 @@ class WebSocketImageClient: WebSocketDelegate {
     }
 
     func connect(withKey key: String) {
-//        isConnected = true
         socket?.connect()
-        isConnected = true  // This should only be set in the .connected event
-        // 延迟发送 key，直到连接真正建立
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
             if self?.isConnected == true {
                 self?.sendKey(key)
@@ -54,11 +54,10 @@ class WebSocketImageClient: WebSocketDelegate {
 
     func disconnect() {
         socket?.disconnect()
-        isConnected = false // This should trigger the didSet and call the closure
+        isConnected = false
         print("Disconnected from WebSocket.")
     }
 
-    // Implement the required method from WebSocketDelegate
     func didReceive(event: WebSocketEvent, client: WebSocketClient) {
         switch event {
         case .connected(let headers):
@@ -68,7 +67,7 @@ class WebSocketImageClient: WebSocketDelegate {
             isConnected = false
             print("WebSocket is disconnected: \(reason) with code: \(code)")
         case .binary(let data):
-            processImageData(data)
+            handleReceivedData(data)
         case .error(let error):
             print("WebSocket encountered an error: \(String(describing: error))")
         default:
@@ -76,8 +75,31 @@ class WebSocketImageClient: WebSocketDelegate {
         }
     }
 
-    // Process and handle the image data received via WebSocket
-    private func processImageData(_ data: Data) {
+    private func handleReceivedData(_ data: Data) {
+        let idSize = 32  // MD5 hash is 32 characters when represented as a string
+        let idData = data.prefix(idSize)
+        let imageData = data.suffix(from: idSize)
+        
+        guard let messageId = String(data: idData, encoding: .utf8) else {
+            print("Error: Unable to decode message ID")
+            return
+        }
+        
+        messageQueue[messageId] = imageData
+        processMessagesInOrder()
+    }
+    
+    private func processMessagesInOrder() {
+        for (messageId, imageData) in messageQueue {
+            if !processedMessageIds.contains(messageId) {
+                processImageData(imageData, withId: messageId)
+                processedMessageIds.insert(messageId)
+                messageQueue.removeValue(forKey: messageId)
+            }
+        }
+    }
+
+    private func processImageData(_ data: Data, withId messageId: String) {
         guard let image = UIImage(data: data) else {
             print("Error: Data cannot be converted to UIImage")
             return
@@ -86,7 +108,8 @@ class WebSocketImageClient: WebSocketDelegate {
         Task {
             do {
                 let embedding = try await MLMultiArray(computeEmbedding(from: image))
-                sendEmbedding(embedding)
+                let ocr_result = ocr(in: image)
+                sendEmbedding(embedding, ocr_result, withId: messageId)
                 onProcessingCompleted?()
             } catch {
                 print("Error processing image: \(error)")
@@ -94,20 +117,58 @@ class WebSocketImageClient: WebSocketDelegate {
         }
     }
 
-//    private func sendEmbedding(_ embedding: MLMultiArray) {
-//        var resultString = "["
+//    private func sendEmbedding(_ embedding: MLMultiArray, withId messageId: String) {
+//        var embeddingArray = [Float]()
 //        for i in 0..<embedding.count {
-//            let value = embedding[i].floatValue
-//            resultString += "\(value)"
-//            if i < embedding.count - 1 {
-//                resultString += ", "
-//            }
+//            embeddingArray.append(embedding[i].floatValue)
 //        }
-//        resultString += "]"
-//        socket?.write(string: resultString) {
-//            print("Embedding data sent successfully.")
+//        
+//        let json: [String: Any] = [
+//            "id": messageId,
+//            "embedding": embeddingArray
+//        ]
+//        
+//        do {
+//            let jsonData = try JSONSerialization.data(withJSONObject: json, options: [])
+//            if let jsonString = String(data: jsonData, encoding: .utf8) {
+//                socket?.write(string: jsonString) {
+//                    print("Embedding data sent successfully as JSON.")
+//                    self.processedMessageIds.remove(messageId)
+//                }
+//            }
+//        } catch {
+//            print("Error serializing JSON: \(error)")
 //        }
 //    }
+    
+    
+    private func sendEmbedding(_ embedding: MLMultiArray,_ ocr_result: [String: Any] ,withId messageId: String) {
+        var embeddingArray = [Float]()
+        for i in 0..<embedding.count {
+            embeddingArray.append(embedding[i].floatValue)
+        }
+
+        let json: [String: Any] = [
+            "id": messageId,
+            "embedding": embeddingArray,
+            "ocr_result": ocr_result["recognizedTexts"]
+        ]
+
+        do {
+            let jsonData = try JSONSerialization.data(withJSONObject: json, options: [])
+            if let jsonString = String(data: jsonData, encoding: .utf8) {
+                socket?.write(string: jsonString) {
+                    print("Embedding data sent successfully as JSON.")
+                    self.processedMessageIds.remove(messageId)
+                }
+            }
+        } catch {
+            print("Error serializing JSON: \(error)")
+        }
+    }
+
+    
+    
     private func sendKey(_ key: String) {
         guard isConnected else {
             print("Connection not established or key not set.")
@@ -117,15 +178,7 @@ class WebSocketImageClient: WebSocketDelegate {
             print("Key '\(key)' sent successfully.")
         }
     }
-    private func sendEmbedding(_ embedding: MLMultiArray) {
-        let stringValues = (0..<embedding.count).map { embedding[$0].floatValue.description }
-        let resultString = "[\(stringValues.joined(separator: ", "))]"
-        socket?.write(string: resultString) {
-            print("Embedding data sent successfully.")
-        }
-    }
 
-    
     private func computeEmbedding(from image: UIImage) async throws -> MLShapedArray<Float32> {
         return try await imgEncoder.computeImgEmbedding(img: image)
     }

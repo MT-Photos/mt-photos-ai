@@ -182,17 +182,17 @@ class WebSocketViewModel: ObservableObject {
 
 
 struct WebSocketView: View {
-    @StateObject var viewModel = WebSocketViewModel()
+    @EnvironmentObject var viewModel: WebSocketViewModel  // Use the environment object
 
     var body: some View {
         VStack {
             TextField("Server Address", text: $viewModel.serverAddress)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
                 .padding()
-            TextField("Client Key", text: $viewModel.clientKey) // Text field for the client key
+            
+            TextField("Key", text: $viewModel.clientKey)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
                 .padding()
-
             Button(action: {
                 if viewModel.isConnected {
                     viewModel.disconnect()
