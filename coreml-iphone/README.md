@@ -44,3 +44,12 @@ __note__: Please ues torch 2.2.0, 2.3.0 will lead to an error when loading the m
 	]
 }
 ```
+
+1. Client->Server: key
+2. Server->Client: Binary (ID+Image Data)
+3. Client->Server: JSON (ID+Embedding+OCR Result)
+4. Repeat 2-3
+
+## URL Scheme
+
+mtphotos-clip://?serverAddress=<ws/wss>://<ip>:<port>&key=<key>
