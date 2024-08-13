@@ -139,6 +139,57 @@ curl --location --request POST 'http://127.0.0.1:8000/ocr' \
 }
 ```
 
+### /clip/txt
+
+```bash
+curl --location --request POST 'http://127.0.0.1:8000/clip/txt' \
+--header 'api-key: api_key' \
+--header 'Content-Type: application/json' \
+--data-raw '{"text":"需要处理的文字"}'
+```
+
+**response:**
+
+- result : 文本的向量值
+
+```json
+{
+    "result": [
+        "1.9757019281387329",
+        "0.8471077680587769",
+        "-0.3866643309593201",
+        "1.1327180862426758",
+        "-0.4881688952445984",
+        ...
+    ]
+}
+```
+
+### /clip/img
+
+```bash
+curl --location --request POST 'http://127.0.0.1:8000/clip/img' \
+--header 'api-key: api_key' \
+--form 'file=@"/path_to_file/test.jpg"'
+```
+
+**response:**
+
+- result : 图片的向量值
+
+```json
+{
+    "result": [
+        "1.9757019281387329",
+        "0.8471077680587769",
+        "-0.3866643309593201",
+        "1.1327180862426758",
+        "-0.4881688952445984",
+        ...
+    ]
+}
+```
+
 ### /restart
 
 通过重启进程来释放内存
