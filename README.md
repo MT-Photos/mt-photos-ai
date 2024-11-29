@@ -94,7 +94,7 @@ INFO:     Uvicorn running on http://0.0.0.0:8060 (Press CTRL+C to quit)
 检测服务是否可用，及api-key是否正确
 
 ```bash
-curl --location --request POST 'http://127.0.0.1:8000/check' \
+curl --location --request POST 'http://127.0.0.1:8060/check' \
 --header 'api-key: api_key'
 ```
 
@@ -109,7 +109,7 @@ curl --location --request POST 'http://127.0.0.1:8000/check' \
 ### /ocr
 
 ```bash
-curl --location --request POST 'http://127.0.0.1:8000/ocr' \
+curl --location --request POST 'http://127.0.0.1:8060/ocr' \
 --header 'api-key: api_key' \
 --form 'file=@"/path_to_file/test.jpg"'
 ```
@@ -153,7 +153,7 @@ curl --location --request POST 'http://127.0.0.1:8000/ocr' \
 ### /clip/img
 
 ```bash
-curl --location --request POST 'http://127.0.0.1:8000/clip/img' \
+curl --location --request POST 'http://127.0.0.1:8060/clip/img' \
 --header 'api-key: api_key' \
 --form 'file=@"/path_to_file/test.jpg"'
 ```
@@ -176,7 +176,7 @@ curl --location --request POST 'http://127.0.0.1:8000/clip/img' \
 ### /clip/txt
 
 ```bash
-curl --location --request POST 'http://127.0.0.1:8000/clip/txt' \
+curl --location --request POST 'http://127.0.0.1:8060/clip/txt' \
 --header "Content-Type: application/json" \
 --header 'api-key: api_key' \
 --data '{"text":"飞机"}'
@@ -202,7 +202,7 @@ curl --location --request POST 'http://127.0.0.1:8000/clip/txt' \
 通过重启进程来释放内存
 
 ```bash
-curl --location --request POST 'http://127.0.0.1:8000/restart_v2' \
+curl --location --request POST 'http://127.0.0.1:8060/restart_v2' \
 --header 'api-key: api_key'
 ```
 
