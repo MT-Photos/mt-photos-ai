@@ -3,6 +3,16 @@
 - 基于PaddleOCR实现的文本识别(OCR)接口
 - 基于Chinese-CLIP（OpenAI CLIP模型的中文版本）实现的图片、文本提取特征接口
 
+
+### 更新日志
+
+**V1.2.0**
+
+ - 升级 onnx 和 openvino中 rapidocr 版本至1.3.26 ，修复OCR识别过程中内存占用较高的问题
+ - 默认端口从8000修改为8060，避免8000端口比较容易遇到冲突的问题
+   
+
+
 ## 目录说明
 
 - openvino：基于rapidocr_openvino库，进行识别任务。**适用于Intel Xeon、Core CPU运行**
@@ -25,14 +35,6 @@ https://hub.docker.com/r/mtphotos/mt-photos-ai
 - onnx:基于onnx文件夹打包生产，推荐**AMD CPU**机型安装这个镜像
 
 由于cuda版本镜像包含的驱动等相关文件较多，未打包镜像，有需要可以自行打包。
-
-### 更新日志
-
-**V1.2.0**
-
- - 升级 onnx 和 openvino中 rapidocr 版本至1.3.26 ，修复OCR识别过程中内存占用较高的问题
- - 默认端口从8000修改为8060，避免8000端口比较容易遇到冲突的问题
- - 默认端口从8000修改为8060，避免8000端口比较容易遇到冲突的问题
 
 
 ### 打包docker镜像
