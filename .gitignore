@@ -1,6 +1,11 @@
 package.json
 openvino/model/*
 onnx/*/*.onnx
+onnx/Pipfile
+onnx/Pipfile.lock
+onnx/server.spec
+onnx/build
+onnx/dist
 openvino/utils/*.onnx
 .env
 .idea/
