@@ -1,4 +1,4 @@
-FROM python:3.8.10-buster
+FROM python:3.11.8-bookworm
 USER root
 # 镜像加速
 COPY ./sources.list /etc/apt/sources.list
@@ -15,12 +15,12 @@ RUN pip3 install --no-cache-dir -r requirements.txt --index-url=https://pypi.tun
 
 COPY ./utils/vit-b-16.img.fp32.onnx ./utils/vit-b-16.img.fp32.onnx
 COPY ./utils/vit-b-16.txt.fp32.onnx ./utils/vit-b-16.txt.fp32.onnx
-COPY ./utils/bert_tokenizer.py ./utils/bert_tokenizer.py
-COPY ./utils/vocab.txt ./utils/vocab.txt
-COPY ./utils/clip.py ./utils/clip.py
-COPY server.py .
+COPY ./bert_tokenizer.py ./bert_tokenizer.py
+COPY ./vocab.txt ./vocab.txt
+COPY ./clip.py ./clip.py
+COPY ./server.py ./server.py
 
 ENV API_AUTH_KEY=mt_photos_ai_extra
-EXPOSE 8000
+EXPOSE 8060
 
 CMD [ "python3", "server.py" ]

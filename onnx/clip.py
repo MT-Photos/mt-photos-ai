@@ -7,7 +7,6 @@ import onnxruntime
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 current_folder = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(current_folder)
 import bert_tokenizer as bert
 
 
@@ -15,7 +14,7 @@ def join_path(folder_path, file_name):
     return os.path.join(folder_path, file_name)
 
 
-model_folder_path = current_folder
+model_folder_path = join_path(current_folder, "utils")
 img_onnx_model_path = join_path(model_folder_path, "vit-b-16.img.fp32.onnx")
 txt_onnx_model_path = join_path(model_folder_path, "vit-b-16.txt.fp32.onnx")
 
@@ -74,13 +73,17 @@ def tokenize_numpy(texts: Union[str, List[str]], context_length: int = 52) -> np
     return result
 
 
-def load_img_model():
+def load_img_model(use_dml):
     img_sess_options = onnxruntime.SessionOptions()
     img_run_options = onnxruntime.RunOptions()
     img_run_options.log_severity_level = 2
+    providers = ["CPUExecutionProvider"]
+    if use_dml:
+        providers = ["DmlExecutionProvider", "CPUExecutionProvider"]
+
     return onnxruntime.InferenceSession(img_onnx_model_path,
                                         sess_options=img_sess_options,
-                                        providers=["CPUExecutionProvider"])
+                                        providers=providers)
 
 
 def process_image(img, img_model):
@@ -90,13 +93,16 @@ def process_image(img, img_model):
     return image_feature
 
 
-def load_txt_model():
+def load_txt_model(use_dml):
     txt_sess_options = onnxruntime.SessionOptions()
     txt_run_options = onnxruntime.RunOptions()
     txt_run_options.log_severity_level = 2
+    providers = ["CPUExecutionProvider"]
+    if use_dml:
+        providers = ["DmlExecutionProvider", "CPUExecutionProvider"]
     return onnxruntime.InferenceSession(txt_onnx_model_path,
                                         sess_options=txt_sess_options,
-                                        providers=["CPUExecutionProvider"])
+                                        providers=providers)
 
 
 def process_txt(txt, text_model):

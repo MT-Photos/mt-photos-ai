@@ -1,23 +1,27 @@
 from dotenv import load_dotenv
 import os
 import sys
+import threading
 from fastapi import Depends, FastAPI, File, UploadFile, HTTPException, Header
+from fastapi.responses import HTMLResponse
 import uvicorn
 import numpy as np
 import cv2
 import asyncio
 from pydantic import BaseModel
 from rapidocr_openvino import RapidOCR
-
 import utils.clip as clip
 
 on_linux = sys.platform.startswith('linux')
 
 load_dotenv()
 app = FastAPI()
-api_auth_key = os.getenv("API_AUTH_KEY")
+api_auth_key = os.getenv("API_AUTH_KEY", "mt_photos_ai_extra")
+http_port = int(os.getenv("HTTP_PORT", "8060"))
+server_restart_time = int(os.getenv("SERVER_RESTART_TIME", "300"))
+env_auto_load_txt_modal = os.getenv("AUTO_LOAD_TXT_MODAL", "off") == "on" # 是否自动加载CLIP文本模型，开启可以优化第一次搜索时的响应速度,文本模型占用700多m内存
 
-inactive_task = None
+restart_timer = None
 rapid_ocr = None
 clip_img_model = None
 clip_txt_model = None
@@ -40,21 +44,25 @@ def load_clip_txt_model():
     if clip_txt_model is None:
         clip_txt_model = clip.load_txt_model()
 
-async def check_inactive():
-    await asyncio.sleep(300)
-    restart_program()
+
+@app.on_event("startup")
+async def startup_event():
+    if env_auto_load_txt_modal:
+        load_clip_txt_model()
 
 
 @app.middleware("http")
 async def check_activity(request, call_next):
-    global inactive_task
-    if inactive_task:
-        inactive_task.cancel()
+    global restart_timer
 
-    inactive_task = asyncio.create_task(check_inactive())
+    if restart_timer:
+        restart_timer.cancel()
+
+    restart_timer = threading.Timer(server_restart_time, restart_program)
+    restart_timer.start()
+
     response = await call_next(request)
     return response
-
 
 async def verify_header(api_key: str = Header(...)):
     # 在这里编写验证逻辑，例如检查 api_key 是否有效
@@ -83,25 +91,48 @@ def trans_result(result):
         }
         boxes.append(box)
         texts.append(res_i[1])
-        scores.append(res_i[2][:4])
+        scores.append(f"{res_i[2]:.2f}")
     return {'texts': texts, 'scores': scores, 'boxes': boxes}
 
 
-@app.get("/")
+@app.get("/", response_class=HTMLResponse)
 async def top_info():
-    return {'about': 'mt-photos-ai-extra'}
+    html_content = """<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>MT Photos AI Server</title>
+    <style>p{text-align: center;}</style>
+</head>
+<body>
+<p style="font-weight: 600;">MT Photos智能识别服务</p>
+<p>服务状态： 运行中</p>
+<p>使用方法： <a href="https://mtmt.tech/docs/advanced/ocr_api">https://mtmt.tech/docs/advanced/ocr_api</a></p>
+</body>
+</html>"""
+    return html_content
 
 
 @app.post("/check")
 async def check_req(api_key: str = Depends(verify_header)):
-    return {'result': 'pass'}
+    return {
+        'result': 'pass',
+        "title": "mt-photos-ai服务",
+        "help": "https://mtmt.tech/docs/advanced/ocr_api",
+    }
 
 
 @app.post("/restart")
 async def check_req(api_key: str = Depends(verify_header)):
-    # 已知的问题：使用openVINO进行OCR识别，存在内存泄露，进程的内存占用会一直增加；
     # 客户端可调用，触发重启进程来释放内存
+    # restart_program()
+    return {'result': 'pass'}
+
+@app.post("/restart_v2")
+async def check_req(api_key: str = Depends(verify_header)):
+    # 预留触发服务重启接口-自动释放内存
     restart_program()
+    return {'result': 'pass'}
 
 @app.post("/ocr")
 async def process_image(file: UploadFile = File(...), api_key: str = Depends(verify_header)):
@@ -121,7 +152,6 @@ async def process_image(file: UploadFile = File(...), api_key: str = Depends(ver
     except Exception as e:
         print(e)
         return {'result': [], 'msg': str(e)}
-
 
 @app.post("/clip/img")
 async def clip_process_image(file: UploadFile = File(...), api_key: str = Depends(verify_header)):
@@ -152,4 +182,4 @@ def restart_program():
 
 
 if __name__ == "__main__":
-    uvicorn.run("server:app", host="0.0.0.0", port=8000)
+    uvicorn.run("server:app", host="0.0.0.0", port=http_port)

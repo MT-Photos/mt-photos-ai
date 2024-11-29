@@ -26,6 +26,14 @@ https://hub.docker.com/r/mtphotos/mt-photos-ai
 
 由于cuda版本镜像包含的驱动等相关文件较多，未打包镜像，有需要可以自行打包。
 
+### 更新日志
+
+**V1.2.0**
+
+ - 升级 onnx 和 openvino中 rapidocr 版本至1.3.26 ，修复OCR识别过程中内存占用较高的问题
+ - 默认端口从8000修改为8060，避免8000端口比较容易遇到冲突的问题
+ - 默认端口从8000修改为8060，避免8000端口比较容易遇到冲突的问题
+
 
 ### 打包docker镜像
 
@@ -38,14 +46,14 @@ docker build  . -t mt-photos-ai:cuda-latest
 ### 运行docker容器
 
 ```bash
-docker run -i -p 8000:8000 -e API_AUTH_KEY=mt_photos_ai_extra_secret --name mt-photos-ai --gpus all --restart="unless-stopped" mt-photos-ai:cuda-latest
+docker run -i -p 8060:8060 -e API_AUTH_KEY=mt_photos_ai_extra_secret --name mt-photos-ai --gpus all --restart="unless-stopped" mt-photos-ai:cuda-latest
 ```
 `cuda-latest`可以替换为`latest`、`cpu-latest`
 
 
 ### 下载源码本地运行
 
-- 安装python **3.8版本**，实测再更高版本上无法运行
+- 安装python **3.10版本**
 - 根据硬件环境选择cuda、onnx或openvino文件夹
 - 在选择文件夹下执行`pip install -r requirements.txt`
 - 复制`.env.example`生成`.env`文件，然后修改`.env`文件内的API_AUTH_KEY
@@ -73,7 +81,7 @@ docker run -i -p 8000:8000 -e API_AUTH_KEY=mt_photos_ai_extra_secret --name mt-p
 INFO:     Started server process [3024]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
-INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Uvicorn running on http://0.0.0.0:8060 (Press CTRL+C to quit)
 ```
 
 
@@ -139,12 +147,60 @@ curl --location --request POST 'http://127.0.0.1:8000/ocr' \
 }
 ```
 
-### /restart
+
+### /clip/img
+
+```bash
+curl --location --request POST 'http://127.0.0.1:8000/clip/img' \
+--header 'api-key: api_key' \
+--form 'file=@"/path_to_file/test.jpg"'
+```
+
+**response:**
+
+- results : 图片的特征向量
+
+```json
+{
+  "results": [
+    "0.3305919170379639",
+    "-0.4954293668270111",
+    "0.0217289477586746",
+    ...
+  ]
+}
+```
+
+### /clip/txt
+
+```bash
+curl --location --request POST 'http://127.0.0.1:8000/clip/txt' \
+--header "Content-Type: application/json" \
+--header 'api-key: api_key' \
+--data '{"text":"飞机"}'
+```
+
+**response:**
+
+- results : 文字的特征向量
+
+```json
+{
+  "results": [
+    "0.3305919170379639",
+    "-0.4954293668270111",
+    "0.0217289477586746",
+    ...
+  ]
+}
+```
+
+### /restart_v2
 
 通过重启进程来释放内存
 
 ```bash
-curl --location --request POST 'http://127.0.0.1:8000/restart' \
+curl --location --request POST 'http://127.0.0.1:8000/restart_v2' \
 --header 'api-key: api_key'
 ```
 

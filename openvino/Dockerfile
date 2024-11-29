@@ -1,9 +1,9 @@
-FROM openvino/ubuntu20_runtime:latest
+FROM openvino/ubuntu22_runtime:latest
 USER root
 # 镜像加速
 COPY ./sources.list /etc/apt/sources.list
 RUN apt update && \
-    apt install -y python3 libgl1-mesa-glx libglib2.0-0 libsm6 libxrender1 libfontconfig1 && \
+    apt install -y python3.10-dev libgl1-mesa-glx libglib2.0-0 libsm6 libxrender1 libfontconfig1 && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/log/*
 
 WORKDIR /app
@@ -17,9 +17,10 @@ COPY ./utils/vit-b-16.txt.fp32.onnx ./utils/vit-b-16.txt.fp32.onnx
 COPY ./utils/bert_tokenizer.py ./utils/bert_tokenizer.py
 COPY ./utils/vocab.txt ./utils/vocab.txt
 COPY ./utils/clip.py ./utils/clip.py
+
 COPY server.py .
 
 ENV API_AUTH_KEY=mt_photos_ai_extra
-EXPOSE 8000
+EXPOSE 8060
 
 CMD [ "python3", "/app/server.py" ]
