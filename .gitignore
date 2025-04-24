@@ -9,4 +9,5 @@ onnx/dist
 openvino/utils/*.onnx
 .env
 .idea/
+cuda/models
 __pycache__

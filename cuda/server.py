@@ -2,15 +2,17 @@ from dotenv import load_dotenv
 import os
 import sys
 from fastapi import Depends, FastAPI, File, UploadFile, HTTPException, Header
+from fastapi.responses import HTMLResponse
 import uvicorn
 import numpy as np
 import cv2
 import asyncio
-from paddleocr import PaddleOCR
+# from paddleocr import PaddleOCR
 import torch
 from PIL import Image, ImageFile
 from io import BytesIO
 from pydantic import BaseModel
+from rapidocr import RapidOCR  # Paddle的cuda镜像太大，改用torch，RapidOCR支持torch
 import cn_clip.clip as clip
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
@@ -18,14 +20,21 @@ on_linux = sys.platform.startswith('linux')
 
 load_dotenv()
 app = FastAPI()
-api_auth_key = os.getenv("API_AUTH_KEY")
+
+api_auth_key = os.getenv("API_AUTH_KEY", "mt_photos_ai_extra")
+http_port = int(os.getenv("HTTP_PORT", "8060"))
+server_restart_time = int(os.getenv("SERVER_RESTART_TIME", "300"))
+env_auto_load_txt_modal = os.getenv("AUTO_LOAD_TXT_MODAL", "off") == "on" # 是否自动加载CLIP文本模型，开启可以优化第一次搜索时的响应速度,文本模型占用700多m内存
+
 clip_model_name = os.getenv("CLIP_MODEL")
 
 
-inactive_task = None
 ocr_model = None
 clip_processor = None
 clip_model = None
+
+restart_task = None
+restart_lock = asyncio.Lock()
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -35,14 +44,14 @@ class ClipTxtRequest(BaseModel):
 def load_ocr_model():
     global ocr_model
     if ocr_model is None:
-        ocr_model = PaddleOCR(
-            show_log=False,
-            use_angle_cls=True,
-            lang="ch",
-            ocr_version="PP-OCRv4",
-            use_gpu=True
+        ocr_model = RapidOCR(
+            params={
+                "Global.with_torch": True,
+                "EngineConfig.torch.use_cuda": torch.cuda.is_available(),  # 使用torch GPU版推理
+                # "EngineConfig.torch.gpu_id": 0,  # 指定GPU id
+            }
         )
-        # https://github.com/PaddlePaddle/PaddleOCR/blob/release/2.7/doc/doc_ch/whl.md
+        # https://rapidai.github.io/RapidOCRDocs/main/install_usage/rapidocr/usage/
 
 def load_clip_model():
     global clip_processor
@@ -53,17 +62,34 @@ def load_clip_model():
         clip_model = model
         clip_processor = preprocess
 
-async def check_inactive():
-    await asyncio.sleep(300)
+@app.on_event("startup")
+async def startup_event():
+    if env_auto_load_txt_modal:
+        load_clip_model()
+
+@app.on_event("shutdown")
+async def on_shutdown():
+    if restart_task and not restart_task.done():
+        restart_task.cancel()
+        try:
+            await restart_task
+        except asyncio.CancelledError:
+            pass
+
+async def restart_timer():
+    await asyncio.sleep(server_restart_time)
     restart_program()
 
 @app.middleware("http")
-async def check_activity(request, call_next):
-    global inactive_task
-    if inactive_task:
-        inactive_task.cancel()
+async def activity_monitor(request, call_next):
+    global restart_task
 
-    inactive_task = asyncio.create_task(check_inactive())
+    async with restart_lock:
+        if restart_task and not restart_task.done():
+            restart_task.cancel()
+
+        restart_task = asyncio.create_task(restart_timer())
+
     response = await call_next(request)
     return response
 
@@ -78,35 +104,67 @@ async def verify_header(api_key: str = Header(...)):
 def to_fixed(num):
     return str(round(num, 2))
 
+def convert_rapidocr_to_json(rapidocr_output):
 
-def trans_result(result):
-    texts = []
-    scores = []
+    if rapidocr_output.txts is None:
+        return {'texts': [], 'scores': [], 'boxes': []}
+
+    texts = list(rapidocr_output.txts)
+    scores = [f"{score:.2f}" for score in rapidocr_output.scores]
+    boxes_coords = rapidocr_output.boxes
+
     boxes = []
-    if result is None:
-        return {'texts': texts, 'scores': scores, 'boxes': boxes}
-    for res_i in result:
-        dt_box = res_i[0]
-        box = {
-            'x': to_fixed(dt_box[0][0]),
-            'y': to_fixed(dt_box[0][1]),
-            'width': to_fixed(dt_box[1][0] - dt_box[0][0]),
-            'height': to_fixed(dt_box[2][1] - dt_box[0][1])
-        }
-        boxes.append(box)
-        scores.append(to_fixed(res_i[1][1]))
-        texts.append(res_i[1][0])
-    return {'texts': texts, 'scores': scores, 'boxes': boxes}
+    for box in boxes_coords:
+        xs = [point[0] for point in box]
+        ys = [point[1] for point in box]
 
+        x_min, x_max = min(xs), max(xs)
+        y_min, y_max = min(ys), max(ys)
 
-@app.get("/")
+        width = x_max - x_min
+        height = y_max - y_min
+
+        boxes.append({
+            'x': to_fixed(x_min),
+            'y': to_fixed(y_min),
+            'width': to_fixed(width),
+            'height': to_fixed(height)
+        })
+
+    output = {
+        'texts': texts,
+        'scores': scores,
+        'boxes': boxes
+    }
+
+    return output
+
+@app.get("/", response_class=HTMLResponse)
 async def top_info():
-    return {'about': 'mt-photos-ai-extra'}
+    html_content = """<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>MT Photos AI Server</title>
+    <style>p{text-align: center;}</style>
+</head>
+<body>
+<p style="font-weight: 600;">MT Photos智能识别服务</p>
+<p>服务状态： 运行中</p>
+<p>使用方法： <a href="https://mtmt.tech/docs/advanced/ocr_api">https://mtmt.tech/docs/advanced/ocr_api</a></p>
+</body>
+</html>"""
+    return html_content
 
 
 @app.post("/check")
 async def check_req(api_key: str = Depends(verify_header)):
-    return {'result': 'pass'}
+    return {
+        'result': 'pass',
+        "title": "mt-photos-ai服务",
+        "help": "https://mtmt.tech/docs/advanced/ocr_api",
+        "device": device
+    }
 
 
 @app.post("/restart")
@@ -115,6 +173,11 @@ async def check_req(api_key: str = Depends(verify_header)):
     return {'result': 'unsupported'}
     # restart_program()
 
+@app.post("/restart_v2")
+async def check_req(api_key: str = Depends(verify_header)):
+    # 预留触发服务重启接口-自动释放内存
+    restart_program()
+    return {'result': 'pass'}
 
 @app.post("/ocr")
 async def process_image(file: UploadFile = File(...), api_key: str = Depends(verify_header)):
@@ -126,8 +189,9 @@ async def process_image(file: UploadFile = File(...), api_key: str = Depends(ver
         height, width, _ = img.shape
         if width > 10000 or height > 10000:
             return {'result': [], 'msg': 'height or width out of range'}
-        _result = await predict(ocr_model.ocr, img)
-        result = trans_result(_result[0])
+
+        _result = await predict(ocr_model, img)
+        result = convert_rapidocr_to_json(_result)
         del img
         del _result
         return {'result': result}
@@ -159,9 +223,10 @@ async def predict(predict_func, inputs):
 
 
 def restart_program():
+    print("restart_program")
     python = sys.executable
     os.execl(python, python, *sys.argv)
 
 
 if __name__ == "__main__":
-    uvicorn.run("server:app", host=None, port=8060)
+    uvicorn.run("server:app", host=None, port=http_port)

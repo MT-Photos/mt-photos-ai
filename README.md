@@ -10,7 +10,14 @@
 
  - 升级 onnx 和 openvino中 rapidocr 版本至1.3.26 ，修复OCR识别过程中内存占用较高的问题
  - 默认端口从8000修改为8060，避免8000端口比较容易遇到冲突的问题
-   
+
+**CUDA 版本V1.2.0**
+
+- cuda版本提升至12.4
+- 移除对paddle框架的依赖，大幅降低镜像大小 （cuda镜像约 7.6G）
+- 将OCR和CLIP ViT-B-16模型内置到镜像内，避免因网络问题导致下载模型失败
+- 同步onnx文件夹其他改动
+
 
 
 ## 目录说明
@@ -48,7 +55,7 @@ docker build  . -t mt-photos-ai:cuda-latest
 ### 运行docker容器
 
 ```bash
-docker run -i -p 8060:8060 -e API_AUTH_KEY=mt_photos_ai_extra_secret --name mt-photos-ai --gpus all --restart="unless-stopped" mt-photos-ai:cuda-latest
+docker run -i -p 8060:8060 -e API_AUTH_KEY=mt_photos_ai_extra --name mt-photos-ai-cuda --gpus all --restart="unless-stopped" mt-photos-ai:cuda-latest
 ```
 `cuda-latest`可以替换为`latest`、`cpu-latest`
 
