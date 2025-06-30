@@ -160,7 +160,8 @@ async def clip_process_image(file: UploadFile = File(...), api_key: str = Depend
     try:
         nparr = np.frombuffer(image_bytes, np.uint8)
         img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-        result = await predict(clip.process_image, img, clip_img_model)
+        # result = await predict(clip.process_image, img, clip_img_model)
+        result = clip.process_image(img, clip_img_model) # 避免 Infer Request is busy 错误
         return {'result': ["{:.16f}".format(vec) for vec in result]}
     except Exception as e:
         print(e)
@@ -170,7 +171,8 @@ async def clip_process_image(file: UploadFile = File(...), api_key: str = Depend
 async def clip_process_txt(request:ClipTxtRequest, api_key: str = Depends(verify_header)):
     load_clip_txt_model()
     text = request.text
-    result = await predict(clip.process_txt, text, clip_txt_model)
+    # result = await predict(clip.process_txt, text, clip_txt_model)
+    result = clip.process_txt(text, clip_txt_model) # 避免 Infer Request is busy 错误
     return {'result': ["{:.16f}".format(vec) for vec in result]}
 
 async def predict(predict_func, inputs,model):
