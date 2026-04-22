@@ -12,3 +12,4 @@ openvino/utils/*.onnx
 cuda/models
 __pycache__
 /cuda/12.4-patch/models/
+/cuda/12.9-patch/models/

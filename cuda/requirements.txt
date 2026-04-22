@@ -8,4 +8,4 @@ python-multipart==0.0.6
 # torch==2.7.0
 # torchvision==0.22.0
 cn-clip==1.5.1
-RapidOCR==2.0.6
+RapidOCR==3.8.1
